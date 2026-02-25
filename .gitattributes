@@ -1,0 +1,3 @@
+# Ensure consistent line endings for cross-platform development
+* text=auto eol=lf
+*.bat text eol=crlf

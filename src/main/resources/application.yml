@@ -1,0 +1,9 @@
+# Mifos Connector Starter - Application Configuration
+spring:
+  application:
+    name: mifos-connector-starter
+
+# Camel context configuration
+camel:
+  springboot:
+    main-run-controller: true
