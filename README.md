@@ -8,17 +8,16 @@ That way your code:
 
 - Uses **Java 21**.
 - Builds with **Gradle**.
-- Uses the correct **Jakarta EE 10 `jakarta.*` namespaces** instead of the old `javax.*` ones.
+- Uses the correct *Jakarta EE 10 `jakarta.` namespaces** instead of the old `javax.`* ones.
 
 ---
 
 ## 1. What you need to know first
 
 - **Primary language**: Java 21  
-  You should be comfortable writing basic classes, methods, and working with JSON/REST style APIs.
-
+You should be comfortable writing basic classes, methods, and working with JSON/REST style APIs.
 - **Build tool**: Gradle (via the included `gradlew` / `gradlew.bat`)  
-  You do not need a global Gradle install; the wrapper in this repo is enough.
+You do not need a global Gradle install; the wrapper in this repo is enough.
 
 Everything else (Spring Boot, Camel, validation) is layered on top of those two.
 
@@ -31,7 +30,7 @@ For GSoC 2026, the Mifos community is migrating **42 existing PH-EE connectors**
 - Java 21
 - Spring Boot 3
 - Apache Camel 4
-- Jakarta EE 10 (`jakarta.*`)
+- Jakarta EE 10 (`jakarta.`*)
 
 This project is the **baseline**:
 
@@ -49,11 +48,9 @@ You do not need to be an expert. For this starter, focus on these three:
 - **Java (basics)**  
   - Classes, interfaces, methods, packages.  
   - Reading and writing simple POJOs (like `PaymentRequest`).
-
 - **Apache Camel (routing)**  
   - Understand a simple route: **from → process → to**.  
   - Know that Camel can unmarshal JSON, validate objects, and call external systems.
-
 - **Gradle (running commands)**  
   - `./gradlew build` and `./gradlew bootRun`.  
   - Running tests and formatting/lint tasks when asked by the project.
@@ -144,7 +141,54 @@ In the logs you will see the validated payment data passing through the Camel ro
 
 ---
 
-## 6. When you get stuck: where people actually go
+## 6. Architectural Standards: The BOM Strategy
+
+This starter **does not manage its own library versions**. Instead, it uses a single **Mifos Platform BOM**:
+
+```groovy
+dependencies {
+    implementation enforcedPlatform('org.mifos.platform:mifos-platform-bom:1.0.0-SNAPSHOT')
+    // other dependencies without versions...
+}
+```
+
+The idea is simple:
+
+- All 42 connectors share **one place** where versions are defined (the BOM).
+- Individual connectors **do not** hard-code versions for Spring Boot, Camel, Zeebe, or Jakarta Validation.
+- This avoids **configuration drift** where each connector slowly ends up on a different stack.
+
+Two useful concepts here:
+
+- `platform(...)` – imports a set of versions, but Gradle can still pick different versions from transitive dependencies.
+- `enforcedPlatform(...)` – imports versions **and** forces them to win over transitive ones.
+
+For this starter we use `**enforcedPlatform`** so that:
+
+- If some old library pulls in a `javax.`* dependency transitively, the BOM’s Jakarta-compatible version wins.
+- You are less likely to end up with a weird mix of old `javax` jars and new `jakarta` ones.
+
+### Testing locally with the BOM
+
+In development you will usually want the BOM built from source first.  
+Typical workflow:
+
+1. Clone the Mifos Platform BOM project.
+2. Run:
+  ```bash
+   ./gradlew publishToMavenLocal
+  ```
+3. Come back to this starter (or your connector) and run:
+  ```bash
+   ./gradlew build
+  ```
+
+Because the `repositories` block includes `mavenLocal()`, your connector will resolve
+`org.mifos.platform:mifos-platform-bom:1.0.0-SNAPSHOT` from your local Maven cache.
+
+---
+
+## 7. When you get stuck: where people actually go
 
 In practice, Mifos developers mostly use **two places** when they are blocked:
 
@@ -152,7 +196,6 @@ In practice, Mifos developers mostly use **two places** when they are blocked:
   - Link: [https://bit.ly/mifos-slack](https://bit.ly/mifos-slack)  
   - Typical channels: `#payment-hub`, `#fineract`, `#help`.  
   - This is where you can ask things like *“My connector route is failing validation, what am I doing wrong?”* and get feedback from maintainers and other contributors.
-
 - **Apache Camel documentation**  
   - Link: [https://camel.apache.org/docs/](https://camel.apache.org/docs/)  
   - Useful sections: components (for specific connectors), “Camel with Spring Boot”, and examples of routes.  
@@ -162,15 +205,15 @@ Feel free to start from this README, try something, and then ask questions in Sl
 
 ---
 
-## 7. Jakarta vs javax – important tip
+## 8. Jakarta vs javax – important tip
 
-You will see a lot of old Java examples online using `javax.*` imports.
+You will see a lot of old Java examples online using `javax.`* imports.
 
 > **Tip from a developer:** **Don’t use `javax` anymore; Spring Boot 3 needs `jakarta`.**
 
 For this project (and all new connectors), use:
 
-- `jakarta.validation.*` instead of `javax.validation.*`
+- `jakarta.validation.`* instead of `javax.validation.`*
 - `jakarta.persistence.*` instead of `javax.persistence.*`
 - `jakarta.servlet.*` instead of `javax.servlet.*`
 
@@ -179,7 +222,7 @@ This is one of the most common migration mistakes.
 
 ---
 
-## 8. Next steps for your own connector
+## 9. Next steps for your own connector
 
 If you are starting a new connector based on this starter:
 
@@ -190,4 +233,3 @@ If you are starting a new connector based on this starter:
 5. **Keep using Jakarta imports** and Gradle tasks from this README.
 
 Once you do that, you have a connector that looks like the rest of the GSoC 2026 work and is much easier for reviewers to follow.
-
