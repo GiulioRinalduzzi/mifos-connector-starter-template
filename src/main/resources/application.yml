@@ -1,9 +1,50 @@
-# Mifos Connector Starter - Application Configuration
+# PH-EE Connector Starter - Application Configuration
+# Structure aligned with reference connector (ph-ee-connector-mccbs)
+
 spring:
   application:
-    name: mifos-connector-starter
+    name: ph-ee-connector-starter
 
-# Camel context configuration
+server:
+  port: ${SERVER_PORT:8080}
+
+# Camel
 camel:
   springboot:
     main-run-controller: true
+
+# Zeebe (PH-EE orchestration)
+zeebe:
+  client:
+    broker:
+      gateway-address: ${ZEEBE_BROKER_CONTACTPOINT:127.0.0.1:26500}
+    security:
+      plaintext: ${ZEEBE_PLAINTEXT:true}
+    worker:
+      threads: ${ZEEBE_CLIENT_WORKER_THREADS:5}
+      defaultName: ph-ee-connector-starter
+      defaultType: starter
+    job:
+      timeout: 30000
+      pollinterval: 100
+      request-timeout: 45000
+      message-time-to-live: 60000
+
+# Logging
+logging:
+  level:
+    root: INFO
+    org.mifos: ${LOGGING_LEVEL_ORG_MIFOS:DEBUG}
+    io.camunda: ${LOGGING_LEVEL_IO_CAMUNDA:INFO}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized

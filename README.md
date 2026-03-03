@@ -1,103 +1,91 @@
-# Mifos Connector Starter – Onboarding Guide
+# PH-EE Connector Starter
 
-This repository is a **starter-level** project for building Mifos Payment Hub EE (PH-EE) connectors.
-It is the **reference template for the GSoC 2026 migration of 42 connectors**.
-
-If you want to contribute a connector during GSoC (or later), **copy this structure** and adapt it.
-That way your code:
-
-- Uses **Java 21**.
-- Builds with **Gradle**.
-- Uses the correct *Jakarta EE 10 `jakarta.` namespaces** instead of the old `javax.`* ones.
+**This project is the baseline and gold-standard reference for the GSoC 2026 migration of 42 Mifos Payment Hub EE (PH-EE) connectors.** If you are contributing to that migration or building a new connector, start here.
 
 ---
 
-## 1. What you need to know first
+## Why This Project Exists
 
-- **Primary language**: Java 21  
-You should be comfortable writing basic classes, methods, and working with JSON/REST style APIs.
-- **Build tool**: Gradle (via the included `gradlew` / `gradlew.bat`)  
-You do not need a global Gradle install; the wrapper in this repo is enough.
+Payment Hub EE is the gateway that connects financial institutions to real-time payment systems. Dozens of connectors (Mastercard CBS, bulk, channel, and others) plug into this hub. Over time, those connectors drifted onto different Java versions, different dependency versions, and—critically—different namespace worlds (`javax.*` vs `jakarta.*`). That makes upgrades risky and review harder.
 
-Everything else (Spring Boot, Camel, validation) is layered on top of those two.
+**This starter is the shared foundation.** It defines how a PH-EE connector is structured, how it uses the Mifos Platform BOM for versions, how it integrates with Zeebe for orchestration, and how it stays on Jakarta EE 10 so that every connector speaks the same language. Using this template means your work fits the ecosystem from day one and is easier for maintainers and other contributors to understand.
 
 ---
 
-## 2. How this starter fits into GSoC 2026
+## What You’ll Find Here
 
-For GSoC 2026, the Mifos community is migrating **42 existing PH-EE connectors** to:
-
-- Java 21
-- Spring Boot 3
-- Apache Camel 4
-- Jakarta EE 10 (`jakarta.`*)
-
-This project is the **baseline**:
-
-- **If you are starting a new connector**: clone this repo, rename the package and artifact, then plug in your own routes and integration code.
-- **If you are migrating an old connector**: use this as a reference for project layout, dependencies, and Jakarta imports.
-
-> **In short**: if your connector looks like this template, reviewers can immediately see that you are using the right stack and namespaces.
+- **Package layout:** `org.mifos.connector.starter` — the same nesting pattern as reference connectors like [ph-ee-connector-mccbs](https://github.com/openMF/ph-ee-connector-mccbs). Your connector would use `org.mifos.connector.<your-connector-name>`.
+- **Zeebe worker:** A sample job worker (`starter-worker`) that uses `@JobWorker` and `@Variable`, returns a `Map` of workflow variables, and logs in a consistent way. This mirrors the worker pattern used in production PH-EE connectors.
+- **Camel route:** A small route that accepts JSON, validates it with Jakarta Bean Validation, and logs a “Payment Processed” style flow. Connectors can combine Zeebe-driven workflows with REST/Camel integration; this shows how both styles coexist.
+- **BOM governance:** Dependencies are not versioned in this repo. They come from the **Mifos Platform BOM** so that all 42 connectors share one source of truth for versions and stay aligned.
 
 ---
 
-## 3. Key skills (GSBX-29)
+## Governance: The BOM and Why We Don’t Pin Versions
 
-You do not need to be an expert. For this starter, focus on these three:
+In this project you will **not** see dependency versions hard-coded for Spring Boot, Camel, Zeebe, or Jakarta. Instead, the build uses:
 
-- **Java (basics)**  
-  - Classes, interfaces, methods, packages.  
-  - Reading and writing simple POJOs (like `PaymentRequest`).
-- **Apache Camel (routing)**  
-  - Understand a simple route: **from → process → to**.  
-  - Know that Camel can unmarshal JSON, validate objects, and call external systems.
-- **Gradle (running commands)**  
-  - `./gradlew build` and `./gradlew bootRun`.  
-  - Running tests and formatting/lint tasks when asked by the project.
+```groovy
+implementation enforcedPlatform('org.mifos.platform:mifos-platform-bom:1.0.0-SNAPSHOT')
+```
 
-If you are comfortable with those three, you are ready to work with this starter.
+That single line pulls in the curated set of versions that the Mifos platform team maintains. Every connector that uses the same BOM stays on the same stack. That avoids “configuration drift”: one connector on Spring Boot 3.2, another on 3.4, and a third still on `javax.*`. With the BOM, we fix versions in one place and every connector benefits.
+
+We use **`enforcedPlatform`** (not just `platform`) so that the BOM’s versions win even when a transitive dependency asks for something else—for example an old `javax.*` library. That keeps the runtime firmly on Jakarta and avoids subtle classpath bugs.
+
+**Working locally:** If you need to change or test against a new BOM, publish it from the BOM project with `./gradlew publishToMavenLocal`, then run `./gradlew build` in this repo (or your connector). The build uses `mavenLocal()` so it will pick up your snapshot.
 
 ---
 
-## 4. Project layout (what lives where)
+## The Move from javax to jakarta (Why It Matters)
+
+Older Java and Spring examples use `javax.validation.*`, `javax.persistence.*`, and `javax.servlet.*`. **PH-EE and Spring Boot 3 use Jakarta EE 10, so all of that is now under `jakarta.*`.** If you copy-paste code from an old tutorial or another project, you will see `javax` imports; for this codebase and any new connector work, replace them with `jakarta`. The validation API, persistence API, and servlet API all live under the `jakarta` namespace. Getting this right from the start avoids confusing runtime errors and keeps the 42-connector migration consistent.
+
+---
+
+## Skills That Help
+
+- **Java:** Comfort with classes, methods, and basic APIs. This project uses Java 21.
+- **Gradle:** Running `./gradlew build` and `./gradlew bootRun`; no need to install Gradle globally (the wrapper is included).
+- **Apache Camel:** Basic idea of routes (from → process → to) and that Camel can unmarshal JSON and call validators and external systems.
+- **Zeebe:** Understanding that workers are invoked by the workflow engine with variables and return variables; the sample worker in this repo shows the pattern.
+
+You don’t need to be an expert. Use this repo as the reference; when you’re stuck, the community and docs are there to help.
+
+---
+
+## Project Layout
 
 ```text
 src/
 ├── main/
-│   ├── java/org/apache/fineract/cn/connector/starter/
+│   ├── java/org/mifos/connector/starter/
 │   │   ├── StarterApplication.java          # Spring Boot entry point
 │   │   ├── ConnectorRouteBuilder.java       # Camel route: JSON -> validate -> log
 │   │   ├── controller/
 │   │   │   └── PaymentController.java       # REST endpoint /api/payments
-│   │   └── dto/
-│   │       └── PaymentRequest.java          # DTO with Jakarta validation
+│   │   ├── dto/
+│   │   │   └── PaymentRequest.java          # DTO with Jakarta validation
+│   │   └── worker/
+│   │       └── StarterZeebeWorker.java     # Zeebe job worker (starter-worker)
 │   └── resources/
-│       └── application.yml                  # Spring Boot + Camel config
+│       └── application.yml                 # Spring Boot, Camel, Zeebe config
 └── test/
-    └── java/org/apache/fineract/cn/connector/starter/
-        └── StarterApplicationTests.java     # Simple context load test
+    └── java/org/mifos/connector/starter/
+        └── StarterApplicationTests.java    # Context load test
 
 config/
 └── checkstyle/
     └── checkstyle.xml                       # Code style rules
 ```
 
-When you create a new connector, keep the same structure but change the package and project name as needed.
-
 ---
 
-## 5. How to build and run
+## Build and Run
 
-### Prerequisites
+**Prerequisites:** JDK 21, Git. Use the project’s Gradle wrapper; no global Gradle install required.
 
-- JDK **21**
-- Git
-
-You do **not** need Gradle installed; use the wrapper.
-
-### Build
-
-From the project root:
+**Build (compile, test, Checkstyle, Spotless):**
 
 ```bash
 ./gradlew build
@@ -109,21 +97,13 @@ On Windows:
 gradlew.bat build
 ```
 
-This will:
-
-- Compile the Java code.
-- Run tests.
-- Run Checkstyle and Spotless checks for formatting.
-
-### Run locally
+**Run:**
 
 ```bash
 ./gradlew bootRun
 ```
 
-The application starts on port `8080`.
-
-Test the sample payment route:
+The app listens on port 8080 by default. To hit the sample Camel route:
 
 ```bash
 curl -X POST http://localhost:8080/api/payments \
@@ -131,105 +111,33 @@ curl -X POST http://localhost:8080/api/payments \
   -d '{"transactionId":"tx-001","accountId":"acc-001","amount":100.50}'
 ```
 
-You should get:
+You should get a “Payment Processed” style response and see the validated payment in the logs.
 
-```text
-Payment Processed
-```
-
-In the logs you will see the validated payment data passing through the Camel route.
+**Code style:** Run `./gradlew spotlessApply` to format code; `spotlessCheck` runs during `build`.
 
 ---
 
-## 6. Architectural Standards: The BOM Strategy
+## When You Need Help
 
-This starter **does not manage its own library versions**. Instead, it uses a single **Mifos Platform BOM**:
+- **Mifos Slack:** [https://bit.ly/mifos-slack](https://bit.ly/mifos-slack) — channels such as `#payment-hub`, `#fineract`, `#help`. This is where maintainers and contributors answer questions about PH-EE and connectors.
+- **Apache Camel:** [https://camel.apache.org/docs/](https://camel.apache.org/docs/) — for route design and components.
 
-```groovy
-dependencies {
-    implementation enforcedPlatform('org.mifos.platform:mifos-platform-bom:1.0.0-SNAPSHOT')
-    // other dependencies without versions...
-}
-```
-
-The idea is simple:
-
-- All 42 connectors share **one place** where versions are defined (the BOM).
-- Individual connectors **do not** hard-code versions for Spring Boot, Camel, Zeebe, or Jakarta Validation.
-- This avoids **configuration drift** where each connector slowly ends up on a different stack.
-
-Two useful concepts here:
-
-- `platform(...)` – imports a set of versions, but Gradle can still pick different versions from transitive dependencies.
-- `enforcedPlatform(...)` – imports versions **and** forces them to win over transitive ones.
-
-For this starter we use `**enforcedPlatform`** so that:
-
-- If some old library pulls in a `javax.`* dependency transitively, the BOM’s Jakarta-compatible version wins.
-- You are less likely to end up with a weird mix of old `javax` jars and new `jakarta` ones.
-
-### Testing locally with the BOM
-
-In development you will usually want the BOM built from source first.  
-Typical workflow:
-
-1. Clone the Mifos Platform BOM project.
-2. Run:
-  ```bash
-   ./gradlew publishToMavenLocal
-  ```
-3. Come back to this starter (or your connector) and run:
-  ```bash
-   ./gradlew build
-  ```
-
-Because the `repositories` block includes `mavenLocal()`, your connector will resolve
-`org.mifos.platform:mifos-platform-bom:1.0.0-SNAPSHOT` from your local Maven cache.
+As you work through the starter or your own connector, try things locally first; when you hit a wall, ask in Slack. That’s how the community expects to help.
 
 ---
 
-## 7. When you get stuck: where people actually go
+## Using This as the Base for Your Connector
 
-In practice, Mifos developers mostly use **two places** when they are blocked:
+1. Copy this repository (or use it as a template) and rename the project/artifact to your connector (e.g. `ph-ee-connector-mccbs`).
+2. Rename the base package from `org.mifos.connector.starter` to `org.mifos.connector.<your-connector-name>` and move sources accordingly.
+3. Update `group` and `rootProject.name` in `build.gradle` and `settings.gradle`.
+4. Replace the sample Camel route and Zeebe worker with your real integration logic, keeping the same patterns (Jakarta validation, BOM, worker variable handling).
+5. Keep all imports on `jakarta.*` and rely on the Mifos Platform BOM for versions.
 
-- **Mifos Slack**  
-  - Link: [https://bit.ly/mifos-slack](https://bit.ly/mifos-slack)  
-  - Typical channels: `#payment-hub`, `#fineract`, `#help`.  
-  - This is where you can ask things like *“My connector route is failing validation, what am I doing wrong?”* and get feedback from maintainers and other contributors.
-- **Apache Camel documentation**  
-  - Link: [https://camel.apache.org/docs/](https://camel.apache.org/docs/)  
-  - Useful sections: components (for specific connectors), “Camel with Spring Boot”, and examples of routes.  
-  - When you are not sure how to write a route or configure a component, this is the first place to look.
-
-Feel free to start from this README, try something, and then ask questions in Slack when you hit a wall—that is normal and expected.
+When your connector follows this structure and governance, it fits the GSoC 2026 migration and the wider PH-EE ecosystem and is ready for review.
 
 ---
 
-## 8. Jakarta vs javax – important tip
+## License
 
-You will see a lot of old Java examples online using `javax.`* imports.
-
-> **Tip from a developer:** **Don’t use `javax` anymore; Spring Boot 3 needs `jakarta`.**
-
-For this project (and all new connectors), use:
-
-- `jakarta.validation.`* instead of `javax.validation.`*
-- `jakarta.persistence.*` instead of `javax.persistence.*`
-- `jakarta.servlet.*` instead of `javax.servlet.*`
-
-If you paste code from a blog or Stack Overflow and it uses `javax`, fix the imports before you commit.  
-This is one of the most common migration mistakes.
-
----
-
-## 9. Next steps for your own connector
-
-If you are starting a new connector based on this starter:
-
-1. **Copy the project** into a new folder / repository.
-2. **Rename the package** `org.apache.fineract.cn.connector.starter` to match your connector name.
-3. **Adjust the Gradle coordinates** (`group`, `version`, project name) in `build.gradle` and `settings.gradle`.
-4. **Replace the sample route** in `ConnectorRouteBuilder` with the flows your connector actually needs (HTTP calls, JMS, database, etc.).
-5. **Keep using Jakarta imports** and Gradle tasks from this README.
-
-Once you do that, you have a connector that looks like the rest of the GSoC 2026 work and is much easier for reviewers to follow.
+This project is licensed under the **Mozilla Public License 2.0 (MPL 2.0)**. See [LICENSE](LICENSE). Source files carry the standard Mifos Initiative copyright header (Copyright 2026 The Mifos Initiative).

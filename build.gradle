@@ -1,18 +1,6 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2026 The Mifos Initiative.
+ * Licensed under the Mozilla Public License 2.0.
  */
 
 plugins {
@@ -23,7 +11,7 @@ plugins {
     id 'com.diffplug.spotless' version '7.0.3'
 }
 
-group = 'org.apache.fineract.cn.connector'
+group = 'org.mifos.connector'
 version = '1.0.0-SNAPSHOT'
 
 java {
@@ -34,16 +22,32 @@ java {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        url = uri('https://artifacts.camunda.com/artifactory/zeebe-io/')
+    }
+    maven {
+        url = uri('https://artifacts.camunda.com/artifactory/zeebe-io-snapshots/')
+    }
+    maven {
+        url = uri('https://artifacts.camunda.com/artifactory/camunda-identity/')
+    }
+    maven {
+        url = uri('https://artifacts.camunda.com/artifactory/camunda-identity-snapshots/')
+    }
 }
 
 dependencies {
     implementation enforcedPlatform('org.mifos.platform:mifos-platform-bom:1.0.0-SNAPSHOT')
+
+    // Apache Camel BOM to manage Camel Spring Boot starter versions
+    implementation platform('org.apache.camel.springboot:camel-spring-boot-bom:4.4.1')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.apache.camel.springboot:camel-spring-boot-starter'
     implementation 'org.apache.camel.springboot:camel-jackson-starter'
     implementation 'org.apache.camel.springboot:camel-bean-validator-starter'
+    implementation 'io.camunda:spring-zeebe-starter:8.4.1'
     implementation 'io.camunda:zeebe-client-java'
     implementation 'jakarta.validation:jakarta.validation-api'
 
