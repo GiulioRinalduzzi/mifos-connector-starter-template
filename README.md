@@ -39,7 +39,7 @@ We use `**enforcedPlatform**` (not just `platform`) so that the BOM’s versions
 
 ## The Move from javax to jakarta (Why It Matters)
 
-Older Java and Spring examples use `javax.validation.`**, `javax.persistence.`*, and `javax.servlet.*`. *PH-EE and Spring Boot 3 use Jakarta EE 10, so all of that is now under* `jakarta.`**.* If you copy-paste code from an old tutorial or another project, you will see `javax` imports; for this codebase and any new connector work, replace them with `jakarta`. The validation API, persistence API, and servlet API all live under the `jakarta` namespace. Getting this right from the start avoids confusing runtime errors and keeps the 42-connector migration consistent.
+Older Java and Spring examples use `javax.validation.*`, `javax.persistence.*`, and `javax.servlet.*`. PH-EE and Spring Boot 3 use Jakarta EE 10, so all of that is now under `jakarta.*`. If you copy-paste code from an old tutorial or another project, you will see `javax` imports; for this codebase and any new connector work, replace them with `jakarta`. The validation API, persistence API, and servlet API all live under the `jakarta` namespace. Getting this right from the start avoids confusing runtime errors and keeps the 42-connector migration consistent.
 
 ---
 
@@ -214,7 +214,7 @@ As you work through the starter or your own connector, try things locally first;
 2. Rename the base package from `org.mifos.connector.starter` to `org.mifos.connector.<your-connector-name>` and move sources accordingly.
 3. Update `group` and `rootProject.name` in `build.gradle` and `settings.gradle`.
 4. Replace the sample Camel route and Zeebe worker with your real integration logic, keeping the same patterns (Jakarta validation, BOM, worker variable handling).
-5. Keep all imports on `jakarta.`* and rely on the Mifos Platform BOM for versions.
+5. Keep all imports on `jakarta.*` and rely on the Mifos Platform BOM for versions.
 
 When your connector follows this structure and governance, it fits the GSoC 2026 migration and the wider PH-EE ecosystem and is ready for review.
 
