@@ -11,7 +11,7 @@ plugins {
     id 'com.diffplug.spotless' version '7.0.3'
 }
 
-group = 'org.mifos.connector'
+group = 'org.mifos'
 version = '1.0.0-SNAPSHOT'
 
 java {
@@ -40,7 +40,7 @@ dependencies {
     implementation enforcedPlatform('org.mifos.platform:mifos-platform-bom:1.0.0-SNAPSHOT')
 
     // Apache Camel BOM to manage Camel Spring Boot starter versions
-    implementation platform('org.apache.camel.springboot:camel-spring-boot-bom:4.4.1')
+    implementation platform("org.apache.camel.springboot:camel-spring-boot-bom:${camelVersion}")
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -48,7 +48,7 @@ dependencies {
     implementation 'org.apache.camel.springboot:camel-spring-boot-starter'
     implementation 'org.apache.camel.springboot:camel-jackson-starter'
     implementation 'org.apache.camel.springboot:camel-bean-validator-starter'
-    implementation 'io.camunda:spring-zeebe-starter:8.4.1'
+    implementation "io.camunda:spring-zeebe-starter:${zeebeVersion}"
     implementation 'io.camunda:zeebe-client-java'
     implementation 'jakarta.validation:jakarta.validation-api'
 

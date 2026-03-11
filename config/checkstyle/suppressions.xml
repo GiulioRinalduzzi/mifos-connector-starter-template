@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<!--
+    PH-EE Connector Starter - Checkstyle Suppressions
+    Add file/check suppressions here to avoid false positives on generated or stub code.
+-->
+<suppressions>
+</suppressions>
