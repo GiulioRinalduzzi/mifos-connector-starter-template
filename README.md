@@ -1,6 +1,6 @@
 # PH-EE Connector Starter
 
-**This project is the baseline and gold-standard reference for the GSoC 2026 migration of 42 Mifos Payment Hub EE (PH-EE) connectors.** If you are contributing to that migration or building a new connector, start here.
+**This project is the baseline and reference implementation for the GSoC 2026 modernization of the Mifos Payment Hub EE (PH-EE) Java stack.** It provides a universal build baseline for every Java component in the ecosystem and a complete reference connector implementation for components that follow the Zeebe @JobWorker + Apache Camel pattern. See the Scope and Applicability section below before using this as a starting point.
 
 ---
 
@@ -9,6 +9,34 @@
 Payment Hub EE is the gateway that connects financial institutions to real-time payment systems. Dozens of connectors (Mastercard CBS, bulk, channel, and others) plug into this hub. Over time, those connectors drifted onto different Java versions, different dependency versions, and—critically—different namespace worlds (`javax.`* vs `jakarta.`*). That makes upgrades risky and review harder.
 
 **This starter is the shared foundation.** It defines how a PH-EE connector is structured, how it uses the Mifos Platform BOM for versions, how it integrates with Zeebe for orchestration, and how it stays on Jakarta EE 10 so that every connector speaks the same language. Using this template means your work fits the ecosystem from day one and is easier for maintainers and other contributors to understand.
+
+---
+
+## Scope and Applicability
+
+This template has two distinct layers. Understanding which layer applies to your component avoids confusion.
+
+**Layer 1 — Universal build baseline (applies to every PH-EE Java component)**
+
+The following artifacts from this repo can be adopted by any Java component in the ecosystem, regardless of architecture:
+
+- `build.gradle` — `enforcedPlatform` BOM import, no hardcoded versions, Spotless, Checkstyle, `-g:source,lines,vars` compiler flag, UTF-8 encoding
+- `Dockerfile` — multi-stage build with `build/libs/*.jar` glob (never breaks on version bumps)
+- `.github/workflows/build.yml` — standardized CI quality gate
+- `gradle/wrapper/gradle-wrapper.properties` — Gradle 8.12.1
+
+**Layer 2 — Connector application pattern (applies to components that follow the Zeebe @JobWorker + Camel route model)**
+
+The application code in `src/main/java` is a reference for the ~60% of PH-EE Java components that are connector services: they receive work from Zeebe, process it through a Camel route, validate inputs with Jakarta Bean Validation, and expose a REST endpoint. If your component fits this pattern, the full template is your starting point.
+
+**Components where Layer 2 does NOT apply:**
+
+| Component | Reason |
+| --- | --- |
+| `ph-ee-connector-common` | A shared library, not an application. Has no `main()`, no Zeebe workers, no Camel routes — it provides the base classes those things inherit from. |
+| `ph-ee-operations-app` | Multi-tenanted REST backend with OAuth2, JPA, and no Camel or Zeebe workers. Adopts Layer 1 only. |
+| `ph-ee-importer-rdbms` / `ph-ee-importer-es` | Kafka consumer microservices. No Camel, no Zeebe. Adopts Layer 1 only. |
+| `ph-ee-exporter` | Zeebe exporter plugin — a different integration model entirely. Adopts Layer 1 only. |
 
 ---
 
@@ -195,7 +223,7 @@ Once the container is running, you can:
 - Call the REST endpoint as before at `http://localhost:8080/api/payments`.
 - Hit the Actuator endpoints at `http://localhost:8080/actuator/health` and `http://localhost:8080/actuator/metrics`.
 
-Treat this as the **“DNA” for the 42-connector migration**: when you add new connectors, reuse this Docker pattern so every PH-EE connector can be started, probed, and debugged in the same way.
+Treat the `Dockerfile` as the universal pattern for every PH-EE Java application — connector or not. When you migrate or build a component, reuse this Docker pattern so every component can be started, probed, and debugged in the same way.
 
 ---
 
